@@ -1,12 +1,14 @@
 #Importações
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 #Instanciação do flask e do banco de dados
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:1234@localhost:5432/minicurso'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+app.secret_key = 'ASDdagsd@1'
 
 #Modelos
 class Minicurso(db.Model):
@@ -23,21 +25,52 @@ class Participante(db.Model):
     phone = db.Column(db.String(15), nullable=False)
     minicurso_id = db.Column(db.Integer, db.ForeignKey('minicurso.id'), nullable=False)
 
-# Inicializa o banco de dados uma unica vez 
+class Login(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    password = db.Column(db.String(100), nullable=False) 
+
 with app.app_context():
     db.create_all()
 
-# Página inicial (redireciona para os minicursos por padrão)
 @app.route('/')
 def home():
-    return redirect(url_for('listar_minicursos'))
+    return render_template('cadastro.html')
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
 
+@app.route('/fazerlogin', methods=['POST', 'GET'])
+def fazer_login():
+    login_user = request.form.get('login')
+    senha_user = request.form.get('senha')
+    
+    usuario = Login.query.filter_by(name=login_user).first()
+    
+    if usuario and usuario.password == senha_user:  
+        session['login'] = login_user
+        return redirect(url_for('listar_minicursos'))
+    else:
+        return render_template('erro.html', mensagem="Usuário não encontrado!")
+@app.route('/fazercadastro', methods=['POST'])
+def fazer_cadastro():
+    login_user = request.form.get('login')
+    senha_user = request.form.get('senha')
+    cadastroexistente = Login.query.filter_by(name=login_user).first()
+    if cadastroexistente:
+        return render_template('erro.html', mensagem="Usuário já cadastrado!")
+    
+    login = Login(name = login_user, password = senha_user)
+    db.session.add(login)
+    db.session.commit()
+    return render_template('login.html')
 # Página de minicursos
 @app.route('/minicursos', methods=['GET'])
 def listar_minicursos():
+    nome_usuario = session['login']
     minicursos = Minicurso.query.all()
-    return render_template('minicursos.html', minicursos=minicursos)
+    return render_template('minicursos.html', minicursos=minicursos, nome=nome_usuario)
 
 #Rota para adicionar minicurso
 @app.route('/adicionar_minicurso', methods=['POST'])

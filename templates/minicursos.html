@@ -7,13 +7,15 @@
     <title>Minicursos</title>
 </head>
 <body>
-    <section style="background-color: #d3d3d3;" >
+    <section style="background-color: #d3d3d3;" >]
+        <h1>Bem-vindo, {{ nome }}!</h1>
         <h1>Adicionar Minicurso</h1>
         <div style="display: flex; justify-content: center; align-items: center;"> 
             <form style="padding: 50px;" action="{{ url_for('adicionar_minicurso') }}" method="post">
                 Título: <input type="text" name="title" required><br>
                 <button type="submit">Adicionar</button>
                 <a href="/participantes"> Página dos participantes</a>
+                <a href="/login"> Refazer login</a>
             </form>
         </div>
         {% if minicursos %}

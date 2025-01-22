@@ -166,4 +166,4 @@ def alterar_participante():
     return redirect(url_for('listar_participantes'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
